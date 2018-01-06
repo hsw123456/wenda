@@ -3,15 +3,12 @@ package com.nowcoder.wenda.controller;
 import com.nowcoder.wenda.model.User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import java.util.*;
 
 /**
  * Created by hsw on 2018/1/1.
@@ -22,8 +19,8 @@ public class IndexController {
 
     @RequestMapping(path = {"/","/index"})
     @ResponseBody
-    public String index(){
-        return "Hello nowcoder!";
+    public String index(HttpSession session){
+        return "Hello nowcoder!" + session.getAttribute("msg");
     }
 
     /**
@@ -52,5 +49,52 @@ public class IndexController {
         User user = new User("Ye shen");
         model.addAttribute("user", user);
         return "home";
+    }
+
+    @RequestMapping(path = {"/request"})
+    @ResponseBody
+    public String request(Model model, HttpServletRequest request,
+                          HttpServletResponse response,
+                          HttpSession session){
+
+        StringBuilder sb = new StringBuilder();
+
+        Enumeration<String> names = request.getHeaderNames();
+        while(names.hasMoreElements()){
+            String name = names.nextElement();
+            sb.append(name+ ":" + request.getHeader(name)+"<br>");
+        }
+        sb.append(request.getMethod()+"<br>");
+        sb.append(request.getQueryString()+"<br>");
+        sb.append(request.getPathInfo()+"<br>");
+        sb.append(request.getRequestURI()+"<br>");
+
+        return sb.toString();
+
+    }
+
+    //测试重定向
+    @RequestMapping(path = {"/redirect/{code}"})
+    public String redirect(Model model, @PathVariable("code") int code,HttpSession session){
+        session.setAttribute("msg","jump from redirect");
+        return "redirect:/";
+    }
+
+
+    //测试重定向
+    @RequestMapping(path = {"/admin"})
+    @ResponseBody
+    public String admin(@RequestParam("key") String key){
+        if("admin".equals(key)){
+            return "hello admin";
+        }
+
+        throw new IllegalArgumentException("参数不对");
+    }
+    //统一处理异常的页面
+    @ExceptionHandler
+    @ResponseBody
+    public String error(Exception e){
+        return "error:" + e.getMessage();
     }
 }
